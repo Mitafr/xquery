@@ -11,6 +11,8 @@ RUN mkdir -p /app
 
 COPY --from=builder /usr/src/server/target/release/w /app/server
 
+COPY ./dist /app/dist
+
 WORKDIR /app
 
 CMD ["/app/server"]
