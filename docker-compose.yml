@@ -19,6 +19,15 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - '7000:7000'
+  back:
+    image: back
+    build: ./back
+    command:
+      - "/app/server"
+    ports:
+      - 3000
+    networks:
+      - internal
 networks:
   internal:
 
@@ -38,16 +47,6 @@ volumes:
   #    - 80
   #  networks:
   #    - internal
-
-  back:
-    image: back
-    build: ./back
-    command:
-      - "/app/server"
-    ports:
-      - 3000
-    networks:
-      - internal
 
   #traefik:
   #  image: "traefik:v2.5"
