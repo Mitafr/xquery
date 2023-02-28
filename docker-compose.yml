@@ -12,6 +12,8 @@ services:
       - LDAP_PASSWORDS=password1,password2
     volumes:
       - 'openldap_data:/bitnami/openldap'
+    networks:
+      - internal
   redis:
     image: 'bitnami/redis:latest'
     environment:
@@ -19,6 +21,8 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - '7000:7000'
+    networks:
+      - internal
   back:
     image: back
     build: ./back
@@ -28,6 +32,10 @@ services:
       - '8000:8000'
     networks:
       - internal
+    links:
+      - "redis"
+      - "openldap"
+
 networks:
   internal:
 

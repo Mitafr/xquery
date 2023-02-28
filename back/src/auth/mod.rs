@@ -108,7 +108,7 @@ pub async fn login_handler(
     payload: Json<LoginInfo>,
 ) -> Result<(SignedCookieJar, impl IntoResponse), LoginError> {
     tracing::debug!("{:#?}", payload);
-    let (conn, mut ldap) = LdapConnAsync::new("ldap://127.0.0.1:1389").await?;
+    let (conn, mut ldap) = LdapConnAsync::new("ldap://openldap:1389").await?;
     ldap3::drive!(conn);
     let rs = search(
         &mut ldap,
