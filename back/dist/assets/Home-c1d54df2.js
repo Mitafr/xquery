@@ -1,0 +1,1 @@
+import{_ as e}from"./index-25d091d5.js";import{d as o,c as t,o as n}from"./vendor-43283a12.js";const r=o({name:"Home",data(){return{}},methods:{}});function a(s,c,m,p,_,d){return n(),t("span",null,"Home")}const l=e(r,[["render",a]]);export{l as default};

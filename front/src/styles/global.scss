@@ -1,0 +1,17 @@
+@font-face {
+    font-family: 'Roboto';
+    font-style: normal;
+    src: local('Roboto-Light'), url(@/assets/fonts/Roboto-Light.ttf) format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto-Bold';
+    font-style: normal;
+    src: local('Roboto-Bold'), url(@/assets/fonts/Roboto-Bold.ttf) format('truetype');
+    font-display: swap;
+}
+
+body {
+    font-family: 'Roboto', Times, serif, sans-serif;
+}
