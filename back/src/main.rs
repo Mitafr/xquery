@@ -1,8 +1,8 @@
-#[macro_use]
 extern crate tera;
 #[macro_use]
 extern crate lazy_static;
-use auth::{login_handler, logout_handler};
+use auth::handlers::{login_handler, logout_handler};
+use auth::middleware::require_authentication;
 use axum::http::HeaderValue;
 use axum::middleware;
 use axum::response::{Html, Redirect};
@@ -16,10 +16,9 @@ use axum::{
 };
 use axum_extra::extract::cookie::Key;
 use hyper::header;
-use serde_json::{to_value, Value};
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
-use tera::{Context, Result, Tera};
+use tera::{Context, Tera};
 use tower::ServiceBuilder;
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
@@ -29,7 +28,6 @@ use tracing_subscriber::fmt;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::Path;
 
@@ -46,14 +44,8 @@ lazy_static! {
             }
         };
         tera.autoescape_on(vec!["html", ".sql", ".ico"]);
-        tera.register_filter("do_nothing", do_nothing_filter);
         tera
     };
-}
-
-pub fn do_nothing_filter(value: &Value, _: &HashMap<String, Value>) -> Result<Value> {
-    let s = try_get_value!("do_nothing_filter", "value", String, value);
-    Ok(to_value(&s).unwrap())
 }
 
 #[tokio::main]
@@ -122,7 +114,7 @@ fn app() -> Router {
         .route("/query", get(index_handler))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
-            auth::require_authentication,
+            require_authentication,
         ))
         .route("/logout", get(logout_handler))
         .route("/login", post(login_handler))

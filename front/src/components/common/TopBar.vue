@@ -2,6 +2,7 @@
   <div
     class="flex justify-content-between align-items-center px-2 surface-section static border-bottom-1 surface-border shadow-3"
     style="height: 60px">
+    <Button icon="pi pi-bars" class="p-button-raised p-button-text" @click="emit('hideNav')" />
     <div class="flex"></div>
     <ul
       class=" list-none p-0 m-0 flex lg:align-items-center select-none flex-row border-none surface-border right-0 top-100 z-1 shadow-none static">
@@ -17,6 +18,7 @@
 <script lang="ts" setup>
 import { store } from "@/auth";
 import { useRouter } from "vue-router";
+import Button from 'primevue/button';
 import SplitButton from 'primevue/splitbutton';
 
 const auth = store;
@@ -28,6 +30,7 @@ const logout = function () {
   });
 }
 
+const emit = defineEmits(["hideNav"]);
 
 const profileItems = [
   {

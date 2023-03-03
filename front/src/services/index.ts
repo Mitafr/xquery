@@ -1,4 +1,6 @@
-export const enum LoginPaths {
-  POST_LOGIN = "http://137.74.117.14/login",
-  POST_LOGOUT = "http://137.74.117.14/logout",
+const BACKEND_URL: string = import.meta.env.VITE_BACKEND_URL;
+
+export const LoginPaths = {
+  POST_LOGIN: BACKEND_URL + "/login",
+  POST_LOGOUT: BACKEND_URL + "/logout",
 }

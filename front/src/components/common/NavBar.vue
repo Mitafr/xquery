@@ -1,6 +1,6 @@
 <template>
-  <div id="app-sidebar-9"
-    class="shadow-3 h-auto surface-section lg:block flex-shrink-0 static left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem">
+  <div id="app-sidebar-9" v-show="show"
+    class="shadow-3 h-auto surface-section lg:block flex-shrink-0 md:static sm:sticky left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem">
     <div class="flex flex-column h-full">
       <img src="@/assets/logo.svg" alt="Image" height="100" width="200" class="my-1" />
       <Divider class="mb-0" />
@@ -37,6 +37,12 @@ import { ref, watch } from "vue";
 const auth = store;
 const router = useRouter();
 const route = useRoute();
+
+defineProps({
+  show: {
+    type: Boolean,
+  }
+});
 
 const logout = async function () {
   await auth.postLogout();
