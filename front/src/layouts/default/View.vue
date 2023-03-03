@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex relative lg:static surface-ground">
-    <NavBar :show="showNav" @hideNav="hideNav"></NavBar>
+    <NavBar :show="showNav" @hideNav="hideNavIfNeeded"></NavBar>
     <div class="min-h-screen flex flex-column relative flex-auto">
       <TopBar @hideNav="toggleNav"></TopBar>
       <div class="m-2">
@@ -27,6 +27,12 @@ const hideNav = () => {
   showNav.value = false;
 }
 
+const hideNavIfNeeded = () => {
+  if (needHide(window.innerWidth)) {
+    hideNav();
+  }
+}
+
 const onResize = (e: Event) => {
   if (needHide((e.target as Window).innerWidth)) {
     hideNav();
@@ -39,8 +45,6 @@ const needHide = (width: number) => {
   return (width <= 700);
 }
 
-if (needHide(window.innerWidth)) {
-  hideNav();
-}
+hideNavIfNeeded();
 
 </script>
