@@ -46,10 +46,8 @@ impl RedisSessionStore {
 
     fn prefix_key(&self, key: impl AsRef<str>) -> String {
         if let Some(ref prefix) = self.prefix {
-            tracing::debug!("Prefix {}", prefix);
             format!("{}{}", prefix, key.as_ref())
         } else {
-            tracing::debug!("Prefix {}", String::from(key.as_ref()));
             key.as_ref().into()
         }
     }

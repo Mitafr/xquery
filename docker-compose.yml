@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  openldap:
+  ldap:
     image: docker.io/bitnami/openldap:2.6
     ports:
       - '1389:1389'
@@ -34,7 +34,10 @@ services:
       - internal
     links:
       - "redis"
-      - "openldap"
+      - "ldap"
+    environment:
+      - LDAP=ldap://ldap:1389
+      - REDIS=redis://redis:7000
 
 networks:
   internal:

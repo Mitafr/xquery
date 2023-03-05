@@ -52,13 +52,13 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() {
-    dotenv().expect(".env file not found");
+    dotenv().ok();
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
     let config = RustlsConfig::from_pem_file(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        PathBuf::from(std::env::current_dir().unwrap())
             .join("certs")
             .join("cert.pem"),
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        PathBuf::from(std::env::current_dir().unwrap())
             .join("certs")
             .join("key.pem"),
     )

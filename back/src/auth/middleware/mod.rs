@@ -14,10 +14,7 @@ pub async fn require_authentication<T>(
     next: Next<T>,
 ) -> (SignedCookieJar, Response) {
     match user {
-        UserIdFromSession::FoundUserId(u) => {
-            tracing::debug!("{:#?}", u);
-            (jar, next.run(request).await)
-        }
+        UserIdFromSession::FoundUserId(_u) => (jar, next.run(request).await),
         UserIdFromSession::NotFound() => {
             tracing::debug!("No user found");
             (

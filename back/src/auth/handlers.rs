@@ -35,11 +35,9 @@ pub async fn logout_handler(
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
     match user_id {
         UserIdFromSession::FoundUserId(u) => {
-            tracing::debug!("{:?}", u);
             // state.store.destroy_session();
         }
         UserIdFromSession::NotFound() => {
-            tracing::debug!("NOT FOUND");
             //state.store.destroy_session(session);
         }
     }

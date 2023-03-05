@@ -39,7 +39,6 @@ where
         let session_cookie = signed_cookie.get("AXUM_SESSION_COOKIE_NAME");
 
         if session_cookie.is_none() {
-            tracing::debug!("No Cookie in header");
             return Ok(Self::NotFound());
         }
 
