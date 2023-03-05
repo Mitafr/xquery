@@ -1,7 +1,7 @@
 <template>
   <div id="app-sidebar"
     class="shadow-3 h-screen surface-section flex-shrink-0 relative left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem"
-    :class="show ? 'show' : 'collapsing'">
+    :class="[show ? 'show' : 'collapsing', hide ? 'hidden' : '']">
     <div class="flex flex-column h-full">
       <img src="@/assets/logo.svg" alt="Image" height="100" width="200" class="my-1" />
       <Divider class="mb-0" />
@@ -39,11 +39,13 @@ const auth = store;
 const router = useRouter();
 const route = useRoute();
 
-defineProps({
+const props = defineProps({
   show: {
     type: Boolean,
   }
 });
+
+const hide = ref(false);
 
 const emit = defineEmits(["hideNav"]);
 
@@ -56,6 +58,14 @@ watch(() => route.name, () => {
   navItems.value.forEach((i) => {
     i.selected = i.alias === route.name;
   })
+});
+
+watch(() => props.show, (oldValue, newValue) => {
+  if (newValue) {
+    setTimeout(() => { hide.value = newValue; }, 100)
+  } else {
+    hide.value = false;
+  }
 });
 
 const navItems = ref([
@@ -72,7 +82,7 @@ const navItems = ref([
   -o-transition: left 0.1s ease;
   -moz-transition: left 0.1s ease;
   transition: left 0.1s ease;
-  left: -225px !important;
+  left: -100% !important;
 }
 
 #app-sidebar.show {

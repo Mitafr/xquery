@@ -34,7 +34,7 @@ pub async fn logout_handler(
     State(_state): State<AppState>,
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
     match user_id {
-        UserIdFromSession::FoundUserId(u) => {
+        UserIdFromSession::FoundUserId(_u) => {
             // state.store.destroy_session();
         }
         UserIdFromSession::NotFound() => {

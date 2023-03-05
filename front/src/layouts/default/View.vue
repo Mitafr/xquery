@@ -1,8 +1,7 @@
 <template>
   <div class="min-h-screen flex relative lg:static surface-ground">
     <NavBar :show="showNav" @hideNav="hideNavIfNeeded"></NavBar>
-    <div id="content" class="min-h-screen  flex flex-column relative flex-auto"
-      :class="!showNav ? 'nav-hidded min-w-full' : ''" style="height: 60px">
+    <div id="content" class="min-h-screen  flex flex-column relative flex-auto" style="height: 60px">
       <TopBar @hideNav="toggleNav"></TopBar>
       <div class="m-2">
         <router-view />
@@ -49,8 +48,4 @@ hideNavIfNeeded();
 
 </script>
 
-<style scoped>
-#content.nav-hidded {
-  left: -224px !important;
-}
-</style>
+<style scoped></style>
