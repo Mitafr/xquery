@@ -1,7 +1,7 @@
 <template>
   <div id="topbar"
-    class="flex justify-content-between align-items-center px-2 surface-section static border-bottom-1 surface-border shadow-3">
-    <Button icon="pi pi-bars" class="p-button-raised p-button-text" @click="emit('hideNav')" />
+    class="flex justify-content-between align-items-center px-2 py-1 surface-section static border-bottom-1 surface-border shadow-3">
+    <Button icon="pi pi-bars" class="p-button-text" @click="emit('hideNav')" />
     <div class="flex"></div>
     <ul
       class=" list-none p-0 m-0 flex lg:align-items-center select-none flex-row border-none surface-border right-0 top-100 z-1 shadow-none static">
