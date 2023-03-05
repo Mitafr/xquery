@@ -42,7 +42,7 @@ pub async fn logout_handler(
         }
     }
     Ok((
-        jar.remove(Cookie::named("AXUM_SESSION_COOKIE_NAME")),
+        jar.remove(Cookie::named("SID")),
         Redirect::to("/login").into_response(),
     ))
 }
@@ -89,7 +89,7 @@ pub async fn login_handler(
             "Put session cookie ({}) in response",
             &cookie_value.as_str()
         );
-        let mut new_cookie = Cookie::new("AXUM_SESSION_COOKIE_NAME", cookie_value);
+        let mut new_cookie = Cookie::new("SID", cookie_value);
         new_cookie.set_same_site(Some(SameSite::Strict));
         new_cookie.set_http_only(true);
         new_cookie.set_max_age(Some(time::Duration::days(1)));

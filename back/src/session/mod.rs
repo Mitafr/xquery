@@ -36,7 +36,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let signed_cookie = SignedCookieJar::from_headers(&parts.headers, Key::from_ref(state));
-        let session_cookie = signed_cookie.get("AXUM_SESSION_COOKIE_NAME");
+        let session_cookie = signed_cookie.get("SID");
 
         if session_cookie.is_none() {
             return Ok(Self::NotFound());
@@ -44,7 +44,7 @@ where
 
         tracing::debug!(
             "UserIdFromSession: got session cookie from user agent, {}={}",
-            "AXUM_SESSION_COOKIE_NAME",
+            "SID",
             session_cookie.as_ref().unwrap()
         );
         match RedisSessionStore::from_ref(state)
@@ -69,7 +69,7 @@ where
                 } else {
                     tracing::debug!(
                         "UserIdFromSession: err session not exists in store, {}={}",
-                        "AXUM_SESSION_COOKIE_NAME",
+                        "SID",
                         session_cookie.as_ref().unwrap()
                     );
                     return Ok(Self::NotFound());

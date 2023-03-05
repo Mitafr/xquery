@@ -18,7 +18,7 @@ pub async fn require_authentication<T>(
         UserIdFromSession::NotFound() => {
             tracing::debug!("No user found");
             (
-                jar.remove(Cookie::named("AXUM_SESSION_COOKIE_NAME")),
+                jar.remove(Cookie::named("SID")),
                 Redirect::to("/login").into_response(),
             )
         }
