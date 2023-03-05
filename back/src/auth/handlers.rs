@@ -53,7 +53,8 @@ pub async fn login_handler(
     State(state): State<AppState>,
     payload: Json<LoginInfo>,
 ) -> Result<(SignedCookieJar, impl IntoResponse), LoginError> {
-    let (conn, mut ldap) = LdapConnAsync::new("ldap://ldap:1389").await?;
+    let url = dotenvy::var("LDAP").unwrap();
+    let (conn, mut ldap) = LdapConnAsync::new(&url).await?;
     ldap3::drive!(conn);
     let rs = search(
         &mut ldap,

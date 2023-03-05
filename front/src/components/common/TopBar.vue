@@ -1,7 +1,6 @@
 <template>
-  <div
-    class="flex justify-content-between align-items-center px-2 surface-section static border-bottom-1 surface-border shadow-3"
-    style="height: 60px">
+  <div id="topbar"
+    class="flex justify-content-between align-items-center px-2 surface-section static border-bottom-1 surface-border shadow-3">
     <Button icon="pi pi-bars" class="p-button-raised p-button-text" @click="emit('hideNav')" />
     <div class="flex"></div>
     <ul

@@ -16,7 +16,7 @@ export default defineConfig({
       safelist: {
         standard: [],
         deep: [],
-        greedy: [/p-/, /pi-/, /col-/, /flag/, /layout/, /customer/, /lg/, /md/, /sm/, /hover/]
+        greedy: [/p-/, /pi-/, /col-/, /flag/, /layout/, /customer/, /lg/, /md/, /sm/, /hover/, /min/, /max/]
       }
     }),
     viteCompression(),

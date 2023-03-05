@@ -15,6 +15,7 @@ use axum::{
     Router,
 };
 use axum_extra::extract::cookie::Key;
+use axum_server::tls_rustls::RustlsConfig;
 use hyper::header;
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
@@ -28,8 +29,10 @@ use tracing_subscriber::fmt;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use dotenvy::dotenv;
+
 use std::net::SocketAddr;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 mod auth;
 mod session;
@@ -50,10 +53,21 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() {
+    dotenv().expect(".env file not found");
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    let config = RustlsConfig::from_pem_file(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("certs")
+            .join("cert.pem"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("certs")
+            .join("key.pem"),
+    )
+    .await
+    .unwrap();
     tracing::debug!("listening on {}", addr);
     println!("listening on {}", addr);
-    axum::Server::bind(&addr)
+    axum_server::bind_rustls(addr, config)
         .serve(app().into_make_service())
         .await
         .unwrap();
@@ -100,13 +114,13 @@ fn setup_logging() {
 
 fn app() -> Router {
     setup_logging();
+    let url = dotenvy::var("REDIS").unwrap();
     let state = AppState {
-        store: RedisSessionStore::new("redis://redis:7000").unwrap(),
+        store: RedisSessionStore::new(url).unwrap(),
         key: Key::from(
             "4t7w!z%C*F-JaNdRgUkXp2r5u8x/A?D(G+KbPeShVmYq3t6v9y$B&E)H@McQfTjWnZr4u7x!z%C*F-JaNdRgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNdRgUkXp2s5v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J@NcRfUjWnZr4u7x!A%D*G-KaPdSgVkYp2s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)".as_bytes(),
         ),
     };
-
     Router::new()
         .route("/", get(index_handler))
         .route("/stats", get(index_handler))

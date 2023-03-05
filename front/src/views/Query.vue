@@ -74,7 +74,6 @@ const products: Ref<Result[]> = ref([]);
 const searchLoading = ref(false);
 
 const launchQuery = async () => {
-    console.log(params);
     searchLoading.value = true;
     products.value = [
         new Result("Bamboo Watch"),

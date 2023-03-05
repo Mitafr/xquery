@@ -1,6 +1,7 @@
 <template>
-  <div id="app-sidebar-9" v-show="show"
-    class="fadein animation-duration-100 shadow-3 h-auto surface-section flex-shrink-0 md:static sm:sticky left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem">
+  <div id="app-sidebar"
+    class="shadow-3 h-screen surface-section flex-shrink-0 relative left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem"
+    :class="show ? 'show' : 'collapsing'">
     <div class="flex flex-column h-full">
       <img src="@/assets/logo.svg" alt="Image" height="100" width="200" class="my-1" />
       <Divider class="mb-0" />
@@ -65,3 +66,20 @@ const navItems = ref([
 ]);
 
 </script>
+<style scoped>
+#app-sidebar.collapsing {
+  -webkit-transition: left 0.1s ease;
+  -o-transition: left 0.1s ease;
+  -moz-transition: left 0.1s ease;
+  transition: left 0.1s ease;
+  left: -225px !important;
+}
+
+#app-sidebar.show {
+  left: 0 !important;
+  -webkit-transition: left 0.1s ease-in;
+  -o-transition: left 0.1s ease-in;
+  -moz-transition: left 0.1s ease-in;
+  transition: left 0.1s ease-in;
+}
+</style>

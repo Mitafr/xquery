@@ -1,7 +1,8 @@
 <template>
   <div class="min-h-screen flex relative lg:static surface-ground">
     <NavBar :show="showNav" @hideNav="hideNavIfNeeded"></NavBar>
-    <div class="min-h-screen flex flex-column relative flex-auto">
+    <div id="content" class="min-h-screen  flex flex-column relative flex-auto"
+      :class="!showNav ? 'nav-hidded min-w-full' : ''" style="height: 60px">
       <TopBar @hideNav="toggleNav"></TopBar>
       <div class="m-2">
         <router-view />
@@ -20,7 +21,6 @@ const showNav = ref(true)
 
 const toggleNav = () => {
   showNav.value = !showNav.value;
-  console.log(showNav.value)
 }
 
 const hideNav = () => {
@@ -48,3 +48,9 @@ const needHide = (width: number) => {
 hideNavIfNeeded();
 
 </script>
+
+<style scoped>
+#content.nav-hidded {
+  left: -224px !important;
+}
+</style>
