@@ -9,7 +9,6 @@ use axum::response::{Html, Redirect};
 use axum::routing::get_service;
 use axum::{
     extract::FromRef,
-    http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
     Router,
@@ -71,10 +70,6 @@ async fn main() {
         .serve(app().into_make_service())
         .await
         .unwrap();
-}
-
-async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...")
 }
 
 #[derive(Clone)]
@@ -142,16 +137,15 @@ fn app() -> Router {
                         HeaderValue::from_static("max-age=31536000"),
                     ))
                     .service(ServeDir::new("dist/assets").precompressed_gzip()),
-            )
-            .handle_error(handle_error),
+            ),
         )
         .nest_service(
             "/favicon.ico",
-            get_service(ServeFile::new("dist/favicon.ico")).handle_error(handle_error),
+            get_service(ServeFile::new("dist/favicon.ico")),
         )
         .nest_service(
             "/unauthorized",
-            get_service(ServeFile::new("dist/errors/403.html")).handle_error(handle_error),
+            get_service(ServeFile::new("dist/errors/403.html")),
         )
         .layer(
             ServiceBuilder::new()

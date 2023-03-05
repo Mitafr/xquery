@@ -8,8 +8,10 @@ use axum::{
     response::{IntoResponse, Redirect},
     Json,
 };
-use axum_extra::extract::{cookie::Cookie, SignedCookieJar};
-use axum_sessions::SameSite;
+use axum_extra::extract::{
+    cookie::{Cookie, SameSite},
+    SignedCookieJar,
+};
 use hyper::{header::COOKIE, StatusCode};
 use ldap3::LdapConnAsync;
 use serde::{Deserialize, Serialize};
@@ -90,7 +92,7 @@ pub async fn login_handler(
             &cookie_value.as_str()
         );
         let mut new_cookie = Cookie::new("AXUM_SESSION_COOKIE_NAME", cookie_value);
-        new_cookie.set_same_site(SameSite::Strict);
+        new_cookie.set_same_site(Some(SameSite::Strict));
         new_cookie.set_http_only(true);
         new_cookie.set_max_age(Some(time::Duration::days(1)));
         response
