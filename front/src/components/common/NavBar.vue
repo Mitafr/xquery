@@ -45,7 +45,7 @@ const props = defineProps({
   }
 });
 
-const hide = ref(false);
+const hide = ref(!props.show);
 
 const emit = defineEmits(["hideNav"]);
 
