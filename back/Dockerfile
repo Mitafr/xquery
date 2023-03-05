@@ -12,6 +12,7 @@ RUN mkdir -p /app
 COPY --from=builder /usr/src/server/target/release/w /app/server
 
 COPY ./dist /app/dist
+COPY ./certs /app/certs
 
 WORKDIR /app
 
