@@ -3,6 +3,7 @@ extern crate tera;
 extern crate lazy_static;
 use auth::handlers::{login_handler, logout_handler};
 use auth::middleware::require_authentication;
+use axum::extract::Host;
 use axum::http::HeaderValue;
 use axum::middleware;
 use axum::response::{Html, Redirect};
@@ -17,7 +18,7 @@ use axum_extra::extract::cookie::Key;
 use axum_server::tls_rustls::RustlsConfig;
 use controller::issued_date_get;
 use db::init_db;
-use hyper::header;
+use hyper::{header, Uri};
 use sea_orm::DatabaseConnection;
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
@@ -31,6 +32,7 @@ use tracing_subscriber::fmt;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use axum::handler::HandlerWithoutStateExt;
 use dotenvy::dotenv;
 
 use std::net::SocketAddr;
@@ -58,8 +60,8 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let http_addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-    let https_addr = SocketAddr::from(([0, 0, 0, 0], 8001));
+    let http_addr = SocketAddr::from(([0, 0, 0, 0], 80));
+    let https_addr = SocketAddr::from(([0, 0, 0, 0], 443));
     let config = RustlsConfig::from_pem_file(
         PathBuf::from(std::env::current_dir().unwrap())
             .join("certs")
@@ -72,14 +74,31 @@ async fn main() {
     .unwrap();
     tracing::debug!("listening on {}", https_addr);
     setup_logging();
-    tokio::spawn(async move {
-        axum::Server::bind(&http_addr)
-            .serve(app().await.into_make_service())
-            .await
-            .unwrap();
-    });
+    tokio::spawn(redirect_http(http_addr.clone(), https_addr.clone()));
     axum_server::bind_rustls(https_addr, config)
         .serve(app().await.into_make_service())
+        .await
+        .unwrap();
+}
+
+async fn redirect_http(http_addr: SocketAddr, https_addr: SocketAddr){
+    let redirect = move |Host(host): Host, uri: Uri| async move {
+        let mut parts = uri.into_parts();
+    
+        parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
+        if parts.path_and_query.is_none() {
+            parts.path_and_query = Some("/".parse().unwrap());
+        }
+        let https_host = host.replace(&http_addr.port().to_string(), &https_addr.port().to_string());
+        parts.authority = Some(https_host.parse().unwrap());
+    
+        let uri = Uri::from_parts(parts).unwrap();
+    
+        Redirect::permanent(&uri.to_string())
+    };
+
+    axum::Server::bind(&http_addr)
+        .serve(redirect.into_make_service())
         .await
         .unwrap();
 }
