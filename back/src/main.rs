@@ -171,7 +171,7 @@ async fn app() -> Router {
                 ))
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::REFERRER_POLICY,
-                    HeaderValue::from_static("origin"),
+                    HeaderValue::from_static("strict-origin-when-cross-origin"),
                 ))
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::X_FRAME_OPTIONS,
@@ -180,7 +180,18 @@ async fn app() -> Router {
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::CONTENT_SECURITY_POLICY,
                     HeaderValue::from_static("default-src 'self' https; script-src 'self' https  'unsafe-inline'; style-src 'self' https 'unsafe-inline'; font-src 'self'; img-src 'self' https://*.tile.openstreetmap.org; frame-src 'self'"),
-                )),
+                ))
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::STRICT_TRANSPORT_SECURITY,
+                    HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+                ))
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::X_XSS_PROTECTION,
+                    HeaderValue::from_static("1; mode=block"),
+                ))
+                
+                
+                ,
         )
         .fallback(handler_404)
         .with_state(state)
