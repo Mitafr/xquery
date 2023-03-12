@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = { version = "^0.1" }
+chrono = { version = "0.4.23", default-features = false, features = ["clock"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 axum = { version = "0.6.1", features = [
@@ -40,5 +42,12 @@ ldap3 = { version = "0.11.1", default-features = false, features = [
     "tls-rustls",
 ] }
 redis = { version = "0.22", features = ["tokio-comp"] }
-async-session = "3.0.0"
+async-session = "3.0"
 uuid = { version = "1.2", features = ["v4", "serde"] }
+
+
+sea-orm = { version = "0.11.0", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+] }

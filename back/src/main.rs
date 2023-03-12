@@ -15,7 +15,10 @@ use axum::{
 };
 use axum_extra::extract::cookie::Key;
 use axum_server::tls_rustls::RustlsConfig;
+use controller::issued_date_get;
+use db::init_db;
 use hyper::header;
+use sea_orm::DatabaseConnection;
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
 use tera::{Context, Tera};
@@ -34,6 +37,8 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 
 mod auth;
+mod controller;
+mod db;
 mod session;
 
 lazy_static! {
@@ -53,7 +58,8 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    let http_addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    let https_addr = SocketAddr::from(([0, 0, 0, 0], 8001));
     let config = RustlsConfig::from_pem_file(
         PathBuf::from(std::env::current_dir().unwrap())
             .join("certs")
@@ -64,10 +70,16 @@ async fn main() {
     )
     .await
     .unwrap();
-    tracing::debug!("listening on {}", addr);
-    println!("listening on {}", addr);
-    axum_server::bind_rustls(addr, config)
-        .serve(app().into_make_service())
+    tracing::debug!("listening on {}", https_addr);
+    setup_logging();
+    tokio::spawn(async move {
+        axum::Server::bind(&http_addr)
+            .serve(app().await.into_make_service())
+            .await
+            .unwrap();
+    });
+    axum_server::bind_rustls(https_addr, config)
+        .serve(app().await.into_make_service())
         .await
         .unwrap();
 }
@@ -76,6 +88,7 @@ async fn main() {
 pub struct AppState {
     store: RedisSessionStore,
     key: Key,
+    db: DatabaseConnection,
 }
 
 impl FromRef<AppState> for Key {
@@ -96,7 +109,7 @@ fn setup_logging() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "w=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "w=info,tower_http=info".into()),
         )
         .with(
             fmt::Layer::new()
@@ -107,16 +120,17 @@ fn setup_logging() {
         .init();
 }
 
-fn app() -> Router {
-    setup_logging();
+async fn app() -> Router {
     let url = dotenvy::var("REDIS").unwrap();
     let state = AppState {
         store: RedisSessionStore::new(url).unwrap(),
         key: Key::from(
             "4t7w!z%C*F-JaNdRgUkXp2r5u8x/A?D(G+KbPeShVmYq3t6v9y$B&E)H@McQfTjWnZr4u7x!z%C*F-JaNdRgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNdRgUkXp2s5v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J@NcRfUjWnZr4u7x!A%D*G-KaPdSgVkYp2s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)".as_bytes(),
         ),
+        db: init_db().await.unwrap()
     };
     Router::new()
+        .route("/api/dateofissue", get(issued_date_get))
         .route("/", get(index_handler))
         .route("/stats", get(index_handler))
         .route("/map", get(index_handler))
@@ -150,7 +164,23 @@ fn app() -> Router {
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
-                .layer(setup_cors()),
+                .layer(setup_cors())
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::X_CONTENT_TYPE_OPTIONS,
+                    HeaderValue::from_static("nosniff"),
+                ))
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::REFERRER_POLICY,
+                    HeaderValue::from_static("origin"),
+                ))
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::X_FRAME_OPTIONS,
+                    HeaderValue::from_static("SAMEORIGIN"),
+                ))
+                .layer(SetResponseHeaderLayer::if_not_present(
+                    header::CONTENT_SECURITY_POLICY,
+                    HeaderValue::from_static("default-src 'self' https; script-src 'self' https  'unsafe-inline'; style-src 'self' https 'unsafe-inline'; font-src 'self'; img-src 'self' https://*.tile.openstreetmap.org; frame-src 'self'"),
+                )),
         )
         .fallback(handler_404)
         .with_state(state)
