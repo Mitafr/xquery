@@ -177,6 +177,10 @@ async fn app() -> Router {
             get_service(ServeFile::new("dist/favicon.ico")),
         )
         .nest_service(
+            "/robots.txt",
+            get_service(ServeFile::new("dist/robots.txt")),
+        )
+        .nest_service(
             "/unauthorized",
             get_service(ServeFile::new("dist/errors/403.html")),
         )
