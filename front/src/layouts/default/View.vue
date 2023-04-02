@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex relative lg:static surface-ground">
-    <NavBar :show="showNav" @hideNav="hideNavIfNeeded"></NavBar>
+    <NavBar :show="showNav" @toggleNav="toggleNav"></NavBar>
     <div id="content" class="min-h-screen  flex flex-column relative flex-auto" style="height: 60px">
       <TopBar @hideNav="toggleNav"></TopBar>
       <div class="m-2">
@@ -12,14 +12,18 @@
 
 <script lang="ts" setup>
 
-import TopBar from "@/components/common/TopBar.vue";
+import TopBar from "@/components/topbar/TopBar.vue";
 import NavBar from "@/components/common/NavBar.vue";
 import { ref } from "vue";
 
-const showNav = ref(true)
+const showNav = ref(false)
 
-const toggleNav = () => {
-  showNav.value = !showNav.value;
+const toggleNav = (e?: boolean) => {
+  if (e !== undefined) {
+    showNav.value = e;
+  } else {
+    showNav.value = !showNav.value;
+  }
 }
 
 const hideNav = () => {

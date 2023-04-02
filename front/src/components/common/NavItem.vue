@@ -1,8 +1,9 @@
 <template>
     <li class="hover:surface-100 transition-duration-150 transition-colors p-ripple" :class="selected ? 'surface-100' : ''">
         <router-link :to="to ?? ''" @click="emit('click')"
-            class="flex flex-row lg:flex-row align-items-center cursor-pointer px-5 text-600 border-right-3 border-transparent hover:border-200 transition-duration-150 transition-colors p-ripple"
-            :class="selected ? 'border-right-3' : ''" style="text-decoration: none" type="button">
+            class="flex flex-row lg:flex-row align-items-center cursor-pointer px-5 text-600 border-right-3 hover:border-400 transition-duration-150 transition-colors p-ripple"
+            :class="selected ? 'border-right-3 border-600' : 'border-transparent'" style="text-decoration: none"
+            type="button">
             <i class="text-base lg:text-2xl mr-4 my-3" :class="icon" style="font-size: 1.4rem;"></i>
             <span class="font-medium inline text-base lg:text-xs lg:block" :class="selected ? 'font-bold' : ''">{{ alias
             }}</span>
@@ -40,7 +41,6 @@ export class NavItemProps implements INavItemProps {
         this.selected = selected;
     }
 }
-
 
 </script>
   

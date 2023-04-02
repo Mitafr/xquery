@@ -2,11 +2,11 @@ import MainApp from "./App.vue";
 import { App, createApp } from "vue";
 import { registerPlugins } from "@/plugins";
 
-import "primevue/resources/themes/soho-dark/theme.css"
 import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import "@/styles/global.scss";
+import "@/styles/theme.css";
 
 const authenticated = <HTMLScriptElement>document.querySelector("#app");
 let app: App;

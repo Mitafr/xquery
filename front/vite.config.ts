@@ -1,5 +1,5 @@
 // Plugins
-import vue, { ResolvedOptions } from "@vitejs/plugin-vue";
+import vue from "@vitejs/plugin-vue";
 import { chunkSplitPlugin } from 'vite-plugin-chunk-split';
 import htmlPurge from 'vite-plugin-purgecss'
 import viteCompression from 'vite-plugin-compression';

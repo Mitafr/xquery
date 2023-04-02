@@ -1,13 +1,12 @@
 <template>
-  <div id="app-sidebar"
-    class="shadow-3 h-screen surface-section flex-shrink-0 relative left-0 top-0 z-1 border-right-1 surface-border w-16rem lg:w-14rem"
-    :class="[show ? 'show' : 'collapsing', hide ? 'hidden' : '']">
+  <Sidebar id="sbar" v-model:visible="showNav" role="region" @hide="emit('toggleNav', false)"
+    @show="emit('toggleNav', true)">
     <div class="flex flex-column h-full">
       <img src="@/assets/logo.svg" alt="Image" height="100" width="200" class="my-1" />
       <Divider class="mb-0" />
       <ul class="relative list-none p-0 m-0">
         <NavItem v-for="(item, i) in navItems" :key="i" :alias="item.alias" :icon="item.icon" :to="item.to"
-          @click="emit('hideNav')" :selected="item.selected"></NavItem>
+          @click="emit('toggleNav', false)" :selected="item.selected"></NavItem>
       </ul>
       <div class="mt-auto">
         <Divider class="mb-0" />
@@ -22,11 +21,12 @@
         </ul>
       </div>
     </div>
-  </div>
+  </Sidebar>
 </template>
 
 <script lang="ts" setup>
 import Divider from "primevue/divider";
+import Sidebar from "primevue/sidebar";
 import NavItem from "./NavItem.vue"
 
 import { store } from "@/auth";
@@ -45,9 +45,9 @@ const props = defineProps({
   }
 });
 
-const hide = ref(!props.show);
+const showNav = ref(props.show);
 
-const emit = defineEmits(["hideNav"]);
+const emit = defineEmits(["toggleNav"]);
 
 const logout = async function () {
   await auth.postLogout();
@@ -62,9 +62,9 @@ watch(() => route.name, () => {
 
 watch(() => props.show, (oldValue, newValue) => {
   if (newValue) {
-    setTimeout(() => { hide.value = newValue; }, 100)
+    setTimeout(() => { showNav.value = !newValue; }, 100)
   } else {
-    hide.value = false;
+    showNav.value = true;
   }
 });
 

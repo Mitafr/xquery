@@ -3,7 +3,7 @@ FROM rust:1.66-slim-buster AS builder
 WORKDIR /usr/src/server
 COPY . .
 
-RUN cargo install --path .
+RUN --mount=type=cache,target=/usr/local/cargo/registry cargo install --path .
 
 FROM debian:buster-slim
 
