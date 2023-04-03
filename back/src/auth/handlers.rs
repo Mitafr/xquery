@@ -77,26 +77,26 @@ pub async fn login_handler(
     };
     ldap.unbind().await.unwrap();
     tracing::debug!("LDAP code={}", code);
-    if code == StatusCode::OK {
-        let mut response = Redirect::to("/").into_response();
-        let user_id = UserId::new(payload.user.to_owned());
-        let mut session = Session::new();
-        session.expire_in(Duration::from_secs(86400));
-        session.insert("user_id", user_id).unwrap();
-        session.insert("user_role", "TEST").unwrap();
-        let cookie_value = state.store.store_session(session).await?.unwrap();
-        tracing::debug!(
-            "Put session cookie ({}) in response",
-            &cookie_value.as_str()
-        );
-        let mut new_cookie = Cookie::new("SID", cookie_value);
-        new_cookie.set_same_site(Some(SameSite::Strict));
-        new_cookie.set_http_only(true);
-        new_cookie.set_max_age(Some(time::Duration::days(1)));
-        response
-            .headers_mut()
-            .append(COOKIE, HeaderValue::from_str(&new_cookie.value()).unwrap());
-        return Ok((jar.add(new_cookie), response));
+    if code != StatusCode::OK {
+        return Err(LoginError::new("Compte introuvable", StatusCode::FORBIDDEN));
     }
-    Ok((jar, Redirect::to("/login").into_response()))
+    let mut response = Redirect::to("/").into_response();
+    let user_id = UserId::new(payload.user.to_owned());
+    let mut session = Session::new();
+    session.expire_in(Duration::from_secs(86400));
+    session.insert("user_id", user_id).unwrap();
+    session.insert("user_role", "TEST").unwrap();
+    let cookie_value = state.store.store_session(session).await?.unwrap();
+    tracing::debug!(
+        "Put session cookie ({}) in response",
+        &cookie_value.as_str()
+    );
+    let mut new_cookie = Cookie::new("SID", cookie_value);
+    new_cookie.set_same_site(Some(SameSite::Strict));
+    new_cookie.set_http_only(true);
+    new_cookie.set_max_age(Some(time::Duration::days(1)));
+    response
+        .headers_mut()
+        .append(COOKIE, HeaderValue::from_str(&new_cookie.value()).unwrap());
+    return Ok((jar.add(new_cookie), response));
 }
