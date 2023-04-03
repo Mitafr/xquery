@@ -20,6 +20,10 @@ const home = ref({
 });
 const items: Ref<MenuItem[]> = ref([]);
 
+if (route.meta.hasOwnProperty("breadcrumb")) {
+    items.value = (route.meta.breadcrumb as RouterBreadcrumb).breadcrumbs;
+}
+
 watch(
   () => route.meta,
   async () => {
