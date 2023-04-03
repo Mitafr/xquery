@@ -28,6 +28,7 @@ use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
+use tracing::{debug, info};
 use tracing_subscriber::fmt;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -60,8 +61,20 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let http_addr = SocketAddr::from(([0, 0, 0, 0], 80));
-    let https_addr = SocketAddr::from(([0, 0, 0, 0], 443));
+    let http_addr = SocketAddr::from((
+        [0, 0, 0, 0],
+        dotenvy::var("HTTP_PORT")
+            .unwrap_or("8080".to_string())
+            .parse()
+            .unwrap(),
+    ));
+    let https_addr = SocketAddr::from((
+        [0, 0, 0, 0],
+        dotenvy::var("HTTPS_PORT")
+            .unwrap_or("443".to_string())
+            .parse()
+            .unwrap(),
+    ));
     let config = RustlsConfig::from_pem_file(
         PathBuf::from(std::env::current_dir().unwrap())
             .join("certs")
@@ -72,28 +85,34 @@ async fn main() {
     )
     .await
     .unwrap();
-    tracing::debug!("listening on {}", https_addr);
+    let app = app().await.into_make_service();
     setup_logging();
+    info!("Listening on HTTP_PORT {}", http_addr);
+    info!("Listening on HTTPS_PORT {}", https_addr);
+    debug!("listening on {}", https_addr);
     tokio::spawn(redirect_http(http_addr.clone(), https_addr.clone()));
     axum_server::bind_rustls(https_addr, config)
-        .serve(app().await.into_make_service())
+        .serve(app)
         .await
         .unwrap();
 }
 
-async fn redirect_http(http_addr: SocketAddr, https_addr: SocketAddr){
+async fn redirect_http(http_addr: SocketAddr, https_addr: SocketAddr) {
     let redirect = move |Host(host): Host, uri: Uri| async move {
         let mut parts = uri.into_parts();
-    
+
         parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
         if parts.path_and_query.is_none() {
             parts.path_and_query = Some("/".parse().unwrap());
         }
-        let https_host = host.replace(&http_addr.port().to_string(), &https_addr.port().to_string());
+        let https_host = host.replace(
+            &http_addr.port().to_string(),
+            &https_addr.port().to_string(),
+        );
         parts.authority = Some(https_host.parse().unwrap());
-    
+
         let uri = Uri::from_parts(parts).unwrap();
-    
+
         Redirect::permanent(&uri.to_string())
     };
 
@@ -211,10 +230,7 @@ async fn app() -> Router {
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::X_XSS_PROTECTION,
                     HeaderValue::from_static("1; mode=block"),
-                ))
-                
-                
-                ,
+                )),
         )
         .fallback(handler_404)
         .with_state(state)

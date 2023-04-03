@@ -3,6 +3,7 @@
     <NavBar :show="showNav" @toggleNav="toggleNav"></NavBar>
     <div id="content" class="min-h-screen  flex flex-column relative flex-auto" style="height: 60px">
       <TopBar @hideNav="toggleNav"></TopBar>
+      <TopBarBreadcrumb @hideNav="toggleNav"></TopBarBreadcrumb>
       <div class="m-2">
         <router-view />
       </div>
@@ -11,8 +12,8 @@
 </template>
 
 <script lang="ts" setup>
-
 import TopBar from "@/components/topbar/TopBar.vue";
+import TopBarBreadcrumb from "@/components/topbar/TopBarBreadcrumb.vue";
 import NavBar from "@/components/common/NavBar.vue";
 import { ref } from "vue";
 
