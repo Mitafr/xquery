@@ -6,12 +6,12 @@
         <div class="text-900 text-3xl font-medium mb-3">Connexion</div>
         <Divider />
       </div>
-      <div>
+      <div class="justify-content-center">
         <label for="username" class="block text-900 font-medium mb-2">Username</label>
         <InputText id="username" type="text" v-model="username" class="w-full mb-3" @keyup.enter="login" />
         <label for="password" class="block text-900 font-medium mb-2">Password</label>
-        <Password id="password" v-model="password" toggleMask class="w-full mb-3" @keyup.enter="login" :feedback="false">
-        </Password>
+        <Password id="password" v-model="password" toggleMask class="w-full mb-3" @keyup.enter="login"
+          :feedback="false" />
         <div class="formgrid grid">
           <div class="field col m-auto md:col-8 sm:col-12">
             <Button label="Submit" icon="pi pi-send" iconPos="right" class="p-button p-button-rounded p-button-success"
@@ -34,8 +34,8 @@ interface Props {
   loading: boolean
 }
 
-let username = "";
-let password = "";
+let username = "user01";
+let password = "password1";
 const emit = defineEmits(["login"]);
 const props = defineProps<Props>();
 const isLoading = toRef(props, 'loading')

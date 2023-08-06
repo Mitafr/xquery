@@ -31,6 +31,7 @@ const login = async (payload: any) => {
     }
   } finally {
     loading.value = false;
+    // auth.user.authenticated = true;
     router.push("/");
   }
 }

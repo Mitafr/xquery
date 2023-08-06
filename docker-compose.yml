@@ -23,17 +23,27 @@ services:
       - '7000:7000'
     networks:
       - internal
+  redis_commander:
+    image: 'rediscommander/redis-commander:latest'
+    depends_on:
+      - redis
+    networks:
+      - internal
+    environment:
+      - REDIS_HOSTS=redis:redis:7000
+    ports:
+      - '8081:8081'
   back:
     image: back
     build: ./back
     command:
       - "/app/server"
     ports:
-      - '80:80'
+      - '80:8080'
       - '443:443'
     networks:
       - internal
-    depends_on: 
+    depends_on:
       - db
       - redis
       - ldap
@@ -49,7 +59,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: user1
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_PASSWORD: /run/secrets/db_password
       POSTGRES_DB: ofac
     networks:
       - internal
@@ -57,10 +67,12 @@ services:
       - 'postgres_data:/var/lib/postgresql/data'
     ports:
       - 5432:5432
+    secrets:
+      - db_password
   adminer:
     image: adminer
     restart: always
-    depends_on: 
+    depends_on:
       - db
     ports:
       - 8080:8080
@@ -70,8 +82,13 @@ services:
 networks:
   internal:
 
+
 volumes:
   openldap_data:
     driver: local
   postgres_data:
     driver: local
+
+secrets:
+  db_password:
+    file: db_password.txt

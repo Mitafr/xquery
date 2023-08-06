@@ -14,6 +14,7 @@ use axum_extra::extract::{
 };
 use hyper::{header::COOKIE, StatusCode};
 use ldap3::LdapConnAsync;
+use sea_orm::{ActiveModelTrait, Set};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -31,11 +32,19 @@ pub struct LoginInfo {
 pub async fn logout_handler(
     user_id: UserIdFromSession,
     jar: SignedCookieJar,
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
     match user_id {
-        UserIdFromSession::FoundUserId(_u) => {
-            // state.store.destroy_session();
+        UserIdFromSession::FoundUserId(u) => {
+            entities::log::ActiveModel {
+                description: Set(format!("User {} has logged out", u.username)),
+                created_at: Set(chrono::Utc::now().naive_utc()),
+                level: Set(String::from("INFO")),
+                ..Default::default()
+            }
+            .insert(&state.db)
+            .await
+            .unwrap();
         }
         UserIdFromSession::NotFound() => {
             //state.store.destroy_session(session);
@@ -63,7 +72,7 @@ pub async fn login_handler(
         &payload.user,
     )
     .await;
-    if rs.len() == 0 {
+    if rs.is_empty() {
         return Err(LoginError::new("Compte introuvable", StatusCode::FORBIDDEN));
     }
     let res = ldap.simple_bind(&rs[0].dn, &payload.password).await;
@@ -84,7 +93,7 @@ pub async fn login_handler(
     let user_id = UserId::new(payload.user.to_owned());
     let mut session = Session::new();
     session.expire_in(Duration::from_secs(86400));
-    session.insert("user_id", user_id).unwrap();
+    session.insert("user_id", user_id.clone()).unwrap();
     session.insert("user_role", "TEST").unwrap();
     let cookie_value = state.store.store_session(session).await?.unwrap();
     tracing::debug!(
@@ -92,11 +101,22 @@ pub async fn login_handler(
         &cookie_value.as_str()
     );
     let mut new_cookie = Cookie::new("SID", cookie_value);
+    //new_cookie.set_same_site(Some(SameSite::Strict));
     new_cookie.set_same_site(Some(SameSite::Strict));
     new_cookie.set_http_only(true);
     new_cookie.set_max_age(Some(time::Duration::days(1)));
+    new_cookie.set_secure(true);
     response
         .headers_mut()
-        .append(COOKIE, HeaderValue::from_str(&new_cookie.value()).unwrap());
-    return Ok((jar.add(new_cookie), response));
+        .append(COOKIE, HeaderValue::from_str(new_cookie.value()).unwrap());
+    tracing::debug!("User {:?} has logged in", user_id.username);
+    entities::log::ActiveModel {
+        description: Set(format!("User {} has logged in", user_id.username)),
+        created_at: Set(chrono::Utc::now().naive_utc()),
+        level: Set(String::from("INFO")),
+        ..Default::default()
+    }
+    .insert(&state.db)
+    .await?;
+    Ok((jar.add(new_cookie), response))
 }

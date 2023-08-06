@@ -27,6 +27,12 @@ export default defineComponent({
     };
   },
   created() {
+    //if (!(this.authenticated === "true")) {
+    //  this.store.user.authenticate("test");
+    //  if (this.route.name == "Login") {
+    //    this.router.push({ name: "Home" });
+    //  }
+    //}
     if (this.authenticated === "true") {
       this.store.user.authenticate(this.username as string);
       if (this.route.name == "Login") {

@@ -5,6 +5,8 @@ export async function postLogin(username: string, password: string) {
   return await axios.post(LoginPaths.POST_LOGIN, {
     user: username,
     password: password,
+  }, {
+    withCredentials: true
   });
 }
 

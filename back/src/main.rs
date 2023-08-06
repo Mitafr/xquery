@@ -16,15 +16,15 @@ use axum::{
 };
 use axum_extra::extract::cookie::Key;
 use axum_server::tls_rustls::RustlsConfig;
-use controller::issued_date_get;
+use controller::get_logs;
 use db::init_db;
-use hyper::{header, Uri};
+use hyper::{header, Method, Uri};
 use sea_orm::DatabaseConnection;
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
 use tera::{Context, Tera};
 use tower::ServiceBuilder;
-use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
@@ -37,7 +37,7 @@ use axum::handler::HandlerWithoutStateExt;
 use dotenvy::dotenv;
 
 use std::net::SocketAddr;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 mod auth;
 mod controller;
@@ -76,10 +76,12 @@ async fn main() {
             .unwrap(),
     ));
     let config = RustlsConfig::from_pem_file(
-        PathBuf::from(std::env::current_dir().unwrap())
+        std::env::current_dir()
+            .unwrap()
             .join("certs")
             .join("cert.pem"),
-        PathBuf::from(std::env::current_dir().unwrap())
+        std::env::current_dir()
+            .unwrap()
             .join("certs")
             .join("key.pem"),
     )
@@ -90,7 +92,7 @@ async fn main() {
     info!("Listening on HTTP_PORT {}", http_addr);
     info!("Listening on HTTPS_PORT {}", https_addr);
     debug!("listening on {}", https_addr);
-    tokio::spawn(redirect_http(http_addr.clone(), https_addr.clone()));
+    tokio::spawn(redirect_http(http_addr, https_addr));
     axum_server::bind_rustls(https_addr, config)
         .serve(app)
         .await
@@ -137,9 +139,26 @@ impl FromRef<AppState> for Key {
 
 fn setup_cors() -> CorsLayer {
     CorsLayer::new()
-        .allow_origin(AllowOrigin::any())
-        .allow_methods(AllowMethods::any())
-        .allow_headers(AllowHeaders::any())
+        .allow_credentials(true)
+        .allow_headers(vec![
+            header::ACCEPT,
+            header::ACCEPT_LANGUAGE,
+            header::AUTHORIZATION,
+            header::CONTENT_LANGUAGE,
+            header::CONTENT_TYPE,
+        ])
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::HEAD,
+            Method::OPTIONS,
+            Method::CONNECT,
+            Method::PATCH,
+            Method::TRACE,
+        ])
+        .allow_origin(AllowOrigin::mirror_request())
 }
 
 fn setup_logging() {
@@ -147,7 +166,7 @@ fn setup_logging() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "w=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "w=debug,tower_http=info".into()),
         )
         .with(
             fmt::Layer::new()
@@ -168,11 +187,12 @@ async fn app() -> Router {
         db: init_db().await.unwrap()
     };
     Router::new()
-        .route("/api/dateofissue", get(issued_date_get))
         .route("/", get(index_handler))
+        .route("/api/logs", get(get_logs))
         .route("/stats", get(index_handler))
         .route("/map", get(index_handler))
         .route("/query", get(index_handler))
+        .route("/logs", get(index_handler))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             require_authentication,
@@ -251,5 +271,6 @@ async fn index_handler(user_id: UserIdFromSession) -> impl IntoResponse {
             context.insert("authenticated", "false");
         }
     }
+    info!("{:#?}", context);
     Html(TEMPLATES.render("index.html", &context).unwrap())
 }

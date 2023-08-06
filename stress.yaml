@@ -4,7 +4,7 @@
 
 ---
 base: 'https://martinpelletier.fr'
-iterations: 100000
+iterations: 10000
 concurrency: 16
 
 plan:

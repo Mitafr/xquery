@@ -12,13 +12,13 @@ export default defineConfig({
   plugins: [
     vue({}),
     chunkSplitPlugin(),
-    htmlPurge({
-      safelist: {
-        standard: [],
-        deep: [],
-        greedy: [/p-/, /pi-/, /col-/, /flag/, /layout/, /customer/, /lg/, /md/, /sm/, /hover/, /min/, /max/, /out/]
-      }
-    }),
+    // htmlPurge({
+    //   safelist: {
+    //     standard: [],
+    //     deep: [],
+    //     greedy: [/p-/, /pi-/, /col-/, /flag/, /layout/, /customer/, /lg/, /md/, /sm/, /hover/, /min/, /max/, /out/]
+    //   }
+    // }),
     viteCompression(),
   ],
   define: { "process.env": {} },

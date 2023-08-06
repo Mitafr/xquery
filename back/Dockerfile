@@ -1,4 +1,4 @@
-FROM rust:1.66-slim-buster AS builder
+FROM rust:1.71.1-slim-buster AS builder
 
 WORKDIR /usr/src/server
 COPY . .
