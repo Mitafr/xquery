@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use async_session::{Session, SessionStore};
+use async_session::{log::RecordBuilder, Session, SessionStore};
 use axum::{
     debug_handler,
     extract::State,
@@ -14,8 +14,8 @@ use axum_extra::extract::{
 };
 use hyper::{header::COOKIE, StatusCode};
 use ldap3::LdapConnAsync;
-use sea_orm::{ActiveModelTrait, Set};
 use serde::{Deserialize, Serialize};
+use tracing_log::log::Log;
 
 use crate::{
     auth::{backend::ldap::search, errors::LoginError},
@@ -36,15 +36,12 @@ pub async fn logout_handler(
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
     match user_id {
         UserIdFromSession::FoundUserId(u) => {
-            entities::log::ActiveModel {
-                description: Set(format!("User {} has logged out", u.username)),
-                created_at: Set(chrono::Utc::now().naive_utc()),
-                level: Set(String::from("INFO")),
-                ..Default::default()
-            }
-            .insert(&state.db)
-            .await
-            .unwrap();
+            state.logger.log(
+                &RecordBuilder::new()
+                    .level(tracing_log::log::Level::Info)
+                    .args(format_args!("User {} has logged out", u.username))
+                    .build(),
+            );
         }
         UserIdFromSession::NotFound() => {
             //state.store.destroy_session(session);
@@ -101,7 +98,6 @@ pub async fn login_handler(
         &cookie_value.as_str()
     );
     let mut new_cookie = Cookie::new("SID", cookie_value);
-    //new_cookie.set_same_site(Some(SameSite::Strict));
     new_cookie.set_same_site(Some(SameSite::Strict));
     new_cookie.set_http_only(true);
     new_cookie.set_max_age(Some(time::Duration::days(1)));
@@ -110,13 +106,11 @@ pub async fn login_handler(
         .headers_mut()
         .append(COOKIE, HeaderValue::from_str(new_cookie.value()).unwrap());
     tracing::debug!("User {:?} has logged in", user_id.username);
-    entities::log::ActiveModel {
-        description: Set(format!("User {} has logged in", user_id.username)),
-        created_at: Set(chrono::Utc::now().naive_utc()),
-        level: Set(String::from("INFO")),
-        ..Default::default()
-    }
-    .insert(&state.db)
-    .await?;
+    state.logger.log(
+        &RecordBuilder::new()
+            .level(tracing_log::log::Level::Info)
+            .args(format_args!("User {} has logged in", user_id.username))
+            .build(),
+    );
     Ok((jar.add(new_cookie), response))
 }

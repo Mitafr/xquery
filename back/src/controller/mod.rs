@@ -1,3 +1,4 @@
+use async_session::log::RecordBuilder;
 use axum::{
     extract::{Query, State},
     Json,
@@ -5,6 +6,7 @@ use axum::{
 use entities::log::Model as LogModel;
 use sea_orm::{EntityTrait, PaginatorTrait, QueryOrder};
 use serde::{Deserialize, Serialize};
+use tracing_log::log::Log;
 
 use crate::AppState;
 
@@ -25,7 +27,12 @@ pub async fn get_logs(
     State(state): State<AppState>,
 ) -> Json<LogResult> {
     let page = params.page;
-    tracing::debug!("get_log {}", page);
+    state.logger.log(
+        &RecordBuilder::new()
+            .level(tracing_log::log::Level::Debug)
+            .args(format_args!("get_log {}", page))
+            .build(),
+    );
     let count = entities::log::Entity::find()
         .count(&state.db)
         .await

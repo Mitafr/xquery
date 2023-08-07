@@ -19,6 +19,7 @@ use axum_server::tls_rustls::RustlsConfig;
 use controller::get_logs;
 use db::init_db;
 use hyper::{header, Method, Uri};
+use logger::AppLogger;
 use sea_orm::DatabaseConnection;
 use session::store::RedisSessionStore;
 use session::UserIdFromSession;
@@ -42,6 +43,7 @@ use std::path::Path;
 mod auth;
 mod controller;
 mod db;
+mod logger;
 mod session;
 
 lazy_static! {
@@ -129,6 +131,7 @@ pub struct AppState {
     store: RedisSessionStore,
     key: Key,
     db: DatabaseConnection,
+    logger: AppLogger,
 }
 
 impl FromRef<AppState> for Key {
@@ -166,7 +169,7 @@ fn setup_logging() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "w=debug,tower_http=info".into()),
+                .unwrap_or_else(|_| "w=info,tower_http=info".into()),
         )
         .with(
             fmt::Layer::new()
@@ -184,7 +187,8 @@ async fn app() -> Router {
         key: Key::from(
             "4t7w!z%C*F-JaNdRgUkXp2r5u8x/A?D(G+KbPeShVmYq3t6v9y$B&E)H@McQfTjWnZr4u7x!z%C*F-JaNdRgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNdRgUkXp2s5v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J@NcRfUjWnZr4u7x!A%D*G-KaPdSgVkYp2s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)".as_bytes(),
         ),
-        db: init_db().await.unwrap()
+        db: init_db().await.unwrap(),
+        logger: AppLogger::new(init_db().await.unwrap()),
     };
     Router::new()
         .route("/", get(index_handler))
@@ -271,6 +275,6 @@ async fn index_handler(user_id: UserIdFromSession) -> impl IntoResponse {
             context.insert("authenticated", "false");
         }
     }
-    info!("{:#?}", context);
+    info!("authenticated=>{}", context.get("authenticated").unwrap());
     Html(TEMPLATES.render("index.html", &context).unwrap())
 }
