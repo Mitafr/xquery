@@ -34,8 +34,8 @@ interface Props {
   loading: boolean
 }
 
-let username = "user01";
-let password = "password1";
+let username = "";
+let password = "";
 const emit = defineEmits(["login"]);
 const props = defineProps<Props>();
 const isLoading = toRef(props, 'loading')

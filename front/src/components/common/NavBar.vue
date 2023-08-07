@@ -73,6 +73,8 @@ const navItems = ref([
   new NavItemProps("Query", "/query", PrimeIcons.SEARCH, route.name === "Query"),
   new NavItemProps("Map", "/map", PrimeIcons.MAP_MARKER, route.name === "Map"),
   new NavItemProps("Stats", "/stats", PrimeIcons.CHART_BAR, route.name === "Stats"),
+  new NavItemProps("Logs", "/logs", PrimeIcons.DATABASE, route.name === "Logs"),
+  new NavItemProps("Admin", "/admin", PrimeIcons.USERS, route.name === "Admin"),
 ]);
 
 </script>

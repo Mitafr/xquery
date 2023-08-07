@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex relative lg:static surface-ground">
     <NavBar :show="showNav" @toggleNav="toggleNav"></NavBar>
-    <div id="content" class="min-h-screen h-full flex flex-column relative flex-auto">
+    <div id="content" class="min-h-screen h-full flex flex-column relative flex-auto max-w-full">
       <TopBar @hideNav="toggleNav"></TopBar>
       <TopBarBreadcrumb @hideNav="toggleNav"></TopBarBreadcrumb>
       <div class="m-2">
