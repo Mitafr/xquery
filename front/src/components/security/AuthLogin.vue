@@ -8,14 +8,14 @@
       </div>
       <div class="justify-content-center">
         <label for="username" class="block text-900 font-medium mb-2">Username</label>
-        <InputText id="username" type="text" v-model="username" class="w-full mb-3" @keyup.enter="login" />
+        <InputText id="username" type="text" v-model="username" class="w-full mb-3" @keyup.enter="emitLogin" />
         <label for="password" class="block text-900 font-medium mb-2">Password</label>
-        <Password id="password" v-model="password" toggleMask class="w-full mb-3" @keyup.enter="login"
+        <Password id="password" v-model="password" toggleMask class="w-full mb-3" @keyup.enter="emitLogin"
           :feedback="false" />
         <div class="formgrid grid">
           <div class="field col m-auto md:col-8 sm:col-12">
             <Button label="Submit" icon="pi pi-send" iconPos="right" class="p-button p-button-rounded p-button-success"
-              @click="login" :loading="isLoading" />
+              @click="emitLogin" :loading="isLoading" />
           </div>
         </div>
       </div>
@@ -40,7 +40,7 @@ const emit = defineEmits(["login"]);
 const props = defineProps<Props>();
 const isLoading = toRef(props, 'loading')
 
-const login = async function () {
+const emitLogin = async function () {
   if (!validateCredentials()) {
     return;
   }
@@ -59,5 +59,9 @@ const validateCredentials = function () {
 <style lang="scss" scoped>
 ::v-deep(.p-password input) {
   width: 100%;
+}
+
+.p-input-icon-right>svg {
+  right: 10px !important;
 }
 </style>

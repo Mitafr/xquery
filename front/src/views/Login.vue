@@ -1,6 +1,6 @@
 <template>
   <div class="grid h-screen w-screen m-0">
-    <AuthLogin @login="login" :loading="loading"></AuthLogin>
+    <AuthLogin @login="sendLogin" :loading="loading"></AuthLogin>
     <Toast position="top-center" />
   </div>
 </template>
@@ -20,7 +20,7 @@ const auth = store;
 const router = useRouter();
 const toast = useToast();
 
-const login = async (payload: any) => {
+const sendLogin = async (payload: any) => {
   try {
     loading.value = true;
     await auth.postLogin(payload.username, payload.password);

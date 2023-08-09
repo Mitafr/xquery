@@ -245,7 +245,7 @@ async fn app() -> Router {
                 ))
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::CONTENT_SECURITY_POLICY,
-                    HeaderValue::from_static("default-src 'self' https; script-src 'self' https  'unsafe-inline'; style-src 'self' https 'unsafe-inline'; font-src 'self'; img-src 'self' https://*.tile.openstreetmap.org; frame-src 'self'"),
+                    HeaderValue::from_static("default-src 'self' https; script-src 'self' https  'unsafe-inline'; style-src 'self' https 'unsafe-inline'; font-src 'self'; img-src 'self' https://openlayers.org https://tile.openstreetmap.org http://a.tile.openstreetmap.org http://b.tile.openstreetmap.org http://c.tile.openstreetmap.org; frame-src 'self'"),
                 ))
                 .layer(SetResponseHeaderLayer::if_not_present(
                     header::STRICT_TRANSPORT_SECURITY,
@@ -271,10 +271,7 @@ async fn index_handler(user_id: UserIdFromSession) -> impl IntoResponse {
             context.insert("authenticated", "true");
             context.insert("username", &user.username);
         }
-        UserIdFromSession::NotFound() => {
-            context.insert("authenticated", "false");
-        }
+        UserIdFromSession::NotFound() => {}
     }
-    info!("authenticated=>{}", context.get("authenticated").unwrap());
     Html(TEMPLATES.render("index.html", &context).unwrap())
 }

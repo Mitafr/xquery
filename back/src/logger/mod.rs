@@ -6,6 +6,15 @@ use std::{
 use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 use tracing_log::log::{Metadata, Record};
 
+macro_rules! log {
+    ($state:expr, $lvl:expr, $arg:expr) => {
+        $state
+            .logger
+            .log(&RecordBuilder::new().level($lvl).args($arg).build());
+    };
+}
+pub(crate) use log;
+
 pub struct ActionLogger {
     entity: entities::log::ActiveModel,
 }
@@ -35,7 +44,7 @@ pub struct AppLogger {
 
 impl AppLogger {
     pub fn new(db: DatabaseConnection) -> AppLogger {
-        let (log_tx, log_rx) = mpsc::sync_channel(256);
+        let (log_tx, log_rx) = mpsc::sync_channel(0);
         tokio::spawn(async move { logger_recorder(log_rx, Arc::new(db)).await });
         AppLogger { log_tx }
     }

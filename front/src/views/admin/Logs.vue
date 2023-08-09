@@ -1,6 +1,6 @@
 <template>
-    <div class="col-12 xl:col-10 p-fluid m-auto">
-        <div class="surface-card p-4 shadow-2 border-round w-full grid">
+    <div class="col-12 xl:col-11 p-fluid m-auto">
+        <div class="surface-card p-2 shadow-2 border-round w-full grid">
             <div class="col-12">
                 <span>Logs</span>
             </div>
@@ -27,6 +27,7 @@ import Row from 'primevue/row';                   // optional
 import Paginator, { PageState } from 'primevue/paginator';
 
 interface LogResult {
+    current_page: number,
     results: any[],
     total: number,
 }
@@ -37,13 +38,16 @@ onMounted(() => {
 
 const columns = [
     { field: 'level', header: 'Level' },
-    { field: 'description', header: 'description' },
+    { field: 'description', header: 'Description' },
     { field: 'created_at', header: 'Timestamp' }
 ];
 
 let logs: Ref<LogResult | undefined> = ref();
 
 const changePage = async function (event: PageState) {
+    if (logs.value?.current_page === event.page) {
+        return;
+    }
     logs.value = (await getLogs(event.page)).data;
 }
 

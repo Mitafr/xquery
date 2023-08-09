@@ -15,10 +15,11 @@ use axum_extra::extract::{
 use hyper::{header::COOKIE, StatusCode};
 use ldap3::LdapConnAsync;
 use serde::{Deserialize, Serialize};
-use tracing_log::log::Log;
+use tracing_log::log::{Level, Log};
 
 use crate::{
     auth::{backend::ldap::search, errors::LoginError},
+    logger::log,
     session::{UserId, UserIdFromSession},
     AppState,
 };
@@ -36,11 +37,10 @@ pub async fn logout_handler(
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
     match user_id {
         UserIdFromSession::FoundUserId(u) => {
-            state.logger.log(
-                &RecordBuilder::new()
-                    .level(tracing_log::log::Level::Info)
-                    .args(format_args!("User {} has logged out", u.username))
-                    .build(),
+            log!(
+                state,
+                Level::Info,
+                format_args!("User {} has logged out", u.username)
             );
         }
         UserIdFromSession::NotFound() => {
@@ -106,11 +106,10 @@ pub async fn login_handler(
         .headers_mut()
         .append(COOKIE, HeaderValue::from_str(new_cookie.value()).unwrap());
     tracing::debug!("User {:?} has logged in", user_id.username);
-    state.logger.log(
-        &RecordBuilder::new()
-            .level(tracing_log::log::Level::Info)
-            .args(format_args!("User {} has logged in", user_id.username))
-            .build(),
+    log!(
+        state,
+        Level::Info,
+        format_args!("User {} has logged in", user_id.username)
     );
     Ok((jar.add(new_cookie), response))
 }

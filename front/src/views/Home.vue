@@ -3,7 +3,7 @@
     <h2>Home</h2>
     <div class="p-4 w-full grid">
       <div class="col-12 md:col-6">
-        <Card class="border-round hover:surface-300" @click="$router.push('/query')" style="cursor: pointer;">
+        <Card class="border-round hover:surface-100" @click="$router.push('/query')" style="cursor: pointer;">
           <template #title> Query </template>
           <template #content>
             <p>Query</p>
@@ -11,7 +11,7 @@
         </Card>
       </div>
       <div class="col-12 md:col-6">
-        <Card class="border-round hover:surface-300" @click="$router.push('/map')" style="cursor: pointer;">
+        <Card class="border-round hover:surface-100" @click="$router.push('/map')" style="cursor: pointer;">
           <template #title> Map </template>
           <template #content>
             <p>View Map</p>
@@ -19,7 +19,7 @@
         </Card>
       </div>
       <div class="col-12 md:col-6">
-        <Card class="border-round hover:surface-300" @click="$router.push('/logs')" style="cursor: pointer;">
+        <Card class="border-round hover:surface-100" @click="$router.push('/logs')" style="cursor: pointer;">
           <template #title> Logs </template>
           <template #content>
             <p>Logs</p>
@@ -27,7 +27,7 @@
         </Card>
       </div>
       <div class="col-12 md:col-6">
-        <Card class="border-round hover:surface-300" @click="$router.push('/admin')" style="cursor: pointer;">
+        <Card class="border-round hover:surface-100" @click="$router.push('/admin')" style="cursor: pointer;">
           <template #title> Admin </template>
           <template #content>
             <p>Administration Panel</p>

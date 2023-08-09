@@ -21,6 +21,7 @@ import AutoComplete from 'primevue/autocomplete';
 import MenuAvatar from './MenuAvatar.vue';
 import MenuSettings from './MenuSettings.vue';
 
+
 const auth = store;
 const router = useRouter();
 
@@ -39,7 +40,7 @@ const searchStyle = {
 </script>
 <style scoped>
 #topbar {
-  background-color: #25282f;
+  background-color: #1f2124;
   border-bottom-color: #25282f;
   height: 48px;
 }

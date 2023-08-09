@@ -33,9 +33,9 @@ services:
       - REDIS_HOSTS=redis:redis:7000
     ports:
       - '8081:8081'
-  back:
-    image: back
-    build: ./back
+  app:
+    image: app
+    build: ./
     command:
       - "/app/server"
     ports:
@@ -59,7 +59,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: user1
-      POSTGRES_PASSWORD: /run/secrets/db_password
+      POSTGRES_PASSWORD: changeme
       POSTGRES_DB: ofac
     networks:
       - internal
@@ -67,8 +67,6 @@ services:
       - 'postgres_data:/var/lib/postgresql/data'
     ports:
       - 5432:5432
-    secrets:
-      - db_password
   adminer:
     image: adminer
     restart: always
@@ -88,7 +86,3 @@ volumes:
     driver: local
   postgres_data:
     driver: local
-
-secrets:
-  db_password:
-    file: db_password.txt
