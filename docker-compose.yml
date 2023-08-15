@@ -23,23 +23,13 @@ services:
       - '7000:7000'
     networks:
       - internal
-  redis_commander:
-    image: 'rediscommander/redis-commander:latest'
-    depends_on:
-      - redis
-    networks:
-      - internal
-    environment:
-      - REDIS_HOSTS=redis:redis:7000
-    ports:
-      - '8081:8081'
   app:
     image: app
     build: ./
     command:
       - "/app/server"
     ports:
-      - '80:8080'
+      - '80:80'
       - '443:443'
     networks:
       - internal
@@ -47,13 +37,12 @@ services:
       - db
       - redis
       - ldap
-    links:
-      - "redis"
-      - "ldap"
     environment:
       - LDAP=ldap://ldap:1389
       - REDIS=redis://redis:7000
       - DB=postgresql://user1:changeme@db:5432/ofac
+      - DATABASE_URL=postgresql://user1:changeme@db:5432/ofac
+      - RUST_LOG=debug
   db:
     image: 'postgres:latest'
     restart: always
@@ -67,15 +56,6 @@ services:
       - 'postgres_data:/var/lib/postgresql/data'
     ports:
       - 5432:5432
-  adminer:
-    image: adminer
-    restart: always
-    depends_on:
-      - db
-    ports:
-      - 8080:8080
-    networks:
-      - internal
 
 networks:
   internal:

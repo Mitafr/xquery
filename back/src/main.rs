@@ -66,7 +66,7 @@ async fn main() {
     let http_addr = SocketAddr::from((
         [0, 0, 0, 0],
         dotenvy::var("HTTP_PORT")
-            .unwrap_or("8080".to_string())
+            .unwrap_or("80".to_string())
             .parse()
             .unwrap(),
     ));
@@ -181,14 +181,14 @@ fn setup_logging() {
 }
 
 async fn app() -> Router {
-    let url = dotenvy::var("REDIS").unwrap();
+    let db = init_db().await.unwrap();
     let state = AppState {
-        store: RedisSessionStore::new(url).unwrap(),
+        store: RedisSessionStore::new(dotenvy::var("REDIS").unwrap()).unwrap(),
         key: Key::from(
             "4t7w!z%C*F-JaNdRgUkXp2r5u8x/A?D(G+KbPeShVmYq3t6v9y$B&E)H@McQfTjWnZr4u7x!z%C*F-JaNdRgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNdRgUkXp2s5v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J@NcRfUjWnZr4u7x!A%D*G-KaPdSgVkYp2s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)".as_bytes(),
         ),
-        db: init_db().await.unwrap(),
-        logger: AppLogger::new(init_db().await.unwrap()),
+        logger: AppLogger::new(db.clone()),
+        db,
     };
     Router::new()
         .route("/", get(index_handler))

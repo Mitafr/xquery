@@ -20,6 +20,11 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(
+                        ColumnDef::new(entities::log::Column::User)
+                            .string()
+                            .not_null(),
+                    )
+                    .col(
                         ColumnDef::new(entities::log::Column::Level)
                             .string()
                             .not_null(),

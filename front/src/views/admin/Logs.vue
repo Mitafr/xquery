@@ -38,6 +38,7 @@ onMounted(() => {
 
 const columns = [
     { field: 'level', header: 'Level' },
+    { field: 'user', header: 'User' },
     { field: 'description', header: 'Description' },
     { field: 'created_at', header: 'Timestamp' }
 ];

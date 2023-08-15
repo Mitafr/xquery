@@ -1,83 +1,196 @@
-use std::{
-    sync::{mpsc, Arc},
-    time::Duration,
-};
+use std::{fmt, sync::Arc};
 
+use async_session::log::RecordBuilder;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
-use tracing_log::log::{Metadata, Record};
+use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{error, info};
+use tracing_log::log::Record;
 
 macro_rules! log {
-    ($state:expr, $lvl:expr, $arg:expr) => {
-        $state
-            .logger
-            .log(&RecordBuilder::new().level($lvl).args($arg).build());
+    ($state:expr, $lvl:expr, $arg:expr, $user:expr) => {
+        $state.logger.log(
+            &AppRecordBuilder::new()
+                .level($lvl)
+                .args($arg)
+                .user($user)
+                .build(),
+        );
     };
 }
 pub(crate) use log;
+use uuid::Uuid;
 
-pub struct ActionLogger {
-    entity: entities::log::ActiveModel,
+use crate::session::{UserId, UserIdFromSession};
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+enum ActionCommand {
+    #[default]
+    CommandRecord,
+    CommandFlush,
+    CommandExit,
 }
 
-async fn logger_recorder(log_rx: mpsc::Receiver<ActionLogger>, db: Arc<DatabaseConnection>) {
-    loop {
-        match log_rx.recv_timeout(Duration::from_secs(60)) {
-            Ok(a) => {
-                let db_clone = Arc::clone(&db);
-                tokio::spawn(async move {
-                    a.entity.insert(&*db_clone).await.unwrap();
-                });
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                eprintln!("AppLogger disconnected; Logging has terminated");
-                break;
-            }
-        };
-    }
+#[derive(Debug, Clone)]
+pub struct ActionLogger {
+    command: ActionCommand,
+    entity: Option<entities::log::ActiveModel>,
 }
 
 #[derive(Clone)]
 pub struct AppLogger {
-    log_tx: mpsc::SyncSender<ActionLogger>,
+    sender: Sender<ActionLogger>,
+}
+
+#[derive(Clone, Debug)]
+pub struct AppRecord<'a> {
+    record: Option<Record<'a>>,
+    user: UserId,
+}
+
+#[derive(Debug)]
+pub struct AppRecordBuilder<'a> {
+    record: AppRecord<'a>,
+    inner_builder: RecordBuilder<'a>,
+}
+
+impl<'a> AppRecordBuilder<'a> {
+    pub fn new() -> AppRecordBuilder<'a> {
+        AppRecordBuilder {
+            record: AppRecord {
+                record: None,
+                user: UserId {
+                    user_id: Uuid::nil(),
+                    username: "SYSTEM".to_owned(),
+                },
+            },
+            inner_builder: RecordBuilder::new(),
+        }
+    }
+
+    pub fn user(&mut self, user: UserIdFromSession) -> &mut AppRecordBuilder<'a> {
+        match user {
+            UserIdFromSession::FoundUserId(user) => self.record.user = user.clone(),
+            UserIdFromSession::NotFound() => {}
+        };
+        self
+    }
+
+    pub fn level(&mut self, level: tracing_log::log::Level) -> &mut AppRecordBuilder<'a> {
+        self.inner_builder.level(level);
+        self
+    }
+
+    pub fn args(&mut self, args: fmt::Arguments<'a>) -> &mut AppRecordBuilder<'a> {
+        self.inner_builder.args(args);
+        self
+    }
+
+    pub fn build(&mut self) -> AppRecord<'a> {
+        self.record.record = Some(self.inner_builder.build());
+        self.record.clone()
+    }
+}
+
+async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: Arc<DatabaseConnection>) {
+    let mut messages = Vec::new();
+    'main: loop {
+        let mut call_flush = false;
+        let mut exit = false;
+        'rx: loop {
+            match receiver.recv().await {
+                Some(a) => match a.command {
+                    ActionCommand::CommandRecord => {
+                        messages.push(a);
+                        if messages.len() > 10 {
+                            messages.push(ActionLogger {
+                                command: ActionCommand::CommandFlush,
+                                entity: None,
+                            });
+                            break 'rx;
+                        }
+                    }
+                    ActionCommand::CommandFlush | ActionCommand::CommandExit => {
+                        call_flush = true;
+                        break 'rx;
+                    }
+                },
+                None => {
+                    call_flush = true;
+                    break 'rx;
+                }
+            }
+        }
+        if call_flush {
+            exit = flush(&mut messages, Arc::clone(&db)).await;
+        }
+        if exit {
+            info!("Exiting {}", messages.len());
+            break 'main;
+        }
+    }
 }
 
 impl AppLogger {
     pub fn new(db: DatabaseConnection) -> AppLogger {
-        let (log_tx, log_rx) = mpsc::sync_channel(0);
-        tokio::spawn(async move { logger_recorder(log_rx, Arc::new(db)).await });
-        AppLogger { log_tx }
-    }
-}
-
-impl tracing_log::log::Log for AppLogger {
-    fn enabled(&self, _metadata: &Metadata<'_>) -> bool {
-        true
+        let (sender, receiver) = tokio::sync::mpsc::channel::<ActionLogger>(256);
+        tokio::spawn(async move { handle_logs(receiver, Arc::new(db)).await });
+        AppLogger { sender }
     }
 
-    fn log(&self, record: &Record) {
-        if !self.enabled(record.metadata()) {
-            return;
-        }
+    pub fn terminate(&mut self) {
+        self.sender
+            .try_send(ActionLogger {
+                command: ActionCommand::CommandExit,
+                entity: None,
+            })
+            .unwrap()
+    }
 
+    pub fn log(&self, record: &AppRecord) {
+        let inner_record = record.record.as_ref().unwrap();
         let log = {
-            let line = match record.line() {
+            let line = match inner_record.line() {
                 Some(l) => l.to_string(),
                 None => String::new(),
             };
-            let description = format!("{line} {}", record.args());
-            tracing_log::log::log!(record.level(), "{line} : {}", record.args());
+            let description = format!("{line} {}", inner_record.args());
+            tracing_log::log::log!(inner_record.level(), "{line} : {}", inner_record.args());
             ActionLogger {
-                entity: entities::log::ActiveModel {
+                command: ActionCommand::default(),
+                entity: Some(entities::log::ActiveModel {
+                    user: Set(record.user.username.to_owned()),
                     description: Set(description),
                     created_at: Set(chrono::Utc::now().naive_utc()),
-                    level: Set(record.level().to_string()),
+                    level: Set(inner_record.level().to_string()),
                     ..Default::default()
-                },
+                }),
             }
         };
-        self.log_tx.send(log).unwrap();
+        match self.sender.try_send(log) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("{}", e);
+            }
+        }
     }
+}
 
-    fn flush(&self) {}
+impl Drop for AppLogger {
+    fn drop(&mut self) {
+        self.terminate();
+    }
+}
+
+async fn flush(messages: &mut Vec<ActionLogger>, db: Arc<DatabaseConnection>) -> bool {
+    let mut exit = false;
+    for message in &mut *messages {
+        exit = exit && message.command == ActionCommand::CommandExit;
+        let entity = match message.entity.as_ref() {
+            Some(e) => e,
+            None => continue,
+        };
+        entity.clone().insert(&*db).await.unwrap();
+    }
+    messages.clear();
+    exit
 }

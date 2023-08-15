@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use async_session::{log::RecordBuilder, Session, SessionStore};
+use async_session::{Session, SessionStore};
 use axum::{
     debug_handler,
     extract::State,
@@ -15,11 +15,11 @@ use axum_extra::extract::{
 use hyper::{header::COOKIE, StatusCode};
 use ldap3::LdapConnAsync;
 use serde::{Deserialize, Serialize};
-use tracing_log::log::{Level, Log};
+use tracing_log::log::Level;
 
 use crate::{
     auth::{backend::ldap::search, errors::LoginError},
-    logger::log,
+    logger::{log, AppRecordBuilder},
     session::{UserId, UserIdFromSession},
     AppState,
 };
@@ -35,18 +35,12 @@ pub async fn logout_handler(
     jar: SignedCookieJar,
     State(state): State<AppState>,
 ) -> Result<(SignedCookieJar, impl IntoResponse), StatusCode> {
-    match user_id {
-        UserIdFromSession::FoundUserId(u) => {
-            log!(
-                state,
-                Level::Info,
-                format_args!("User {} has logged out", u.username)
-            );
-        }
-        UserIdFromSession::NotFound() => {
-            //state.store.destroy_session(session);
-        }
-    }
+    log!(
+        state,
+        Level::Info,
+        format_args!("User has logged out"),
+        user_id
+    );
     Ok((
         jar.remove(Cookie::named("SID")),
         Redirect::to("/login").into_response(),
@@ -105,11 +99,12 @@ pub async fn login_handler(
     response
         .headers_mut()
         .append(COOKIE, HeaderValue::from_str(new_cookie.value()).unwrap());
-    tracing::debug!("User {:?} has logged in", user_id.username);
     log!(
         state,
         Level::Info,
-        format_args!("User {} has logged in", user_id.username)
+        format_args!("User has logged in"),
+        UserIdFromSession::FoundUserId(user_id.clone())
     );
+    tracing::debug!("User {:?} has logged in", user_id.username);
     Ok((jar.add(new_cookie), response))
 }

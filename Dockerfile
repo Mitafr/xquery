@@ -5,7 +5,7 @@ COPY ./back .
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry cargo install --path .
 
-FROM node:lts-buster AS frontbuilder
+FROM node:lts-alpine AS frontbuilder
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ COPY ./front .
 RUN chmod u+x ./build.sh
 RUN ./build.sh
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 RUN mkdir -p /app
 

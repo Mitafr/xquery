@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { AdminPaths } from "@/services/index";
 
 export async function getLogs(page = 0) {

@@ -1,5 +1,6 @@
 #!/bin/sh
 
+rm -rf ./build
 yarn build
 
 head -n -7 ./dist/index.html > tmp.txt && mv tmp.txt ./dist/index.html

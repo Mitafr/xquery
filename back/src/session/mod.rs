@@ -19,7 +19,7 @@ pub struct FreshUserId {
     pub cookie: HeaderValue,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UserIdFromSession {
     FoundUserId(UserId),
     NotFound(),

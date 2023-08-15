@@ -12,6 +12,10 @@ pub async fn init_db() -> Result<DatabaseConnection, DbErr> {
             );
             Ok(db)
         }
-        Err(e) => Err(e),
+        Err(e) => {
+            println!("{} : {:?}", dotenvy::var("DB").unwrap(), e);
+            tracing::error!("{} : {:?}", dotenvy::var("DB").unwrap(), e);
+            Err(e)
+        }
     }
 }

@@ -1,5 +1,4 @@
-use crate::logger::log;
-use async_session::log::RecordBuilder;
+use crate::{logger::log, logger::AppRecordBuilder, session::UserIdFromSession};
 use axum::{
     extract::{Query, State},
     Json,
@@ -7,7 +6,6 @@ use axum::{
 use entities::log::Model as LogModel;
 use sea_orm::{EntityTrait, PaginatorTrait, QueryOrder};
 use serde::{Deserialize, Serialize};
-use tracing_log::log::Log;
 
 use crate::AppState;
 
@@ -27,12 +25,14 @@ pub struct PaginatorParams {
 pub async fn get_logs(
     Query(params): Query<PaginatorParams>,
     State(state): State<AppState>,
+    user_id: UserIdFromSession,
 ) -> Json<LogResult> {
     let page = params.page;
     log!(
         state,
         tracing_log::log::Level::Debug,
-        format_args!("Fetching logs page {}", page)
+        format_args!("Fetching logs page {}", page),
+        user_id
     );
     let count = entities::log::Entity::find()
         .count(&state.db)

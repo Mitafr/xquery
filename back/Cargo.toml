@@ -40,7 +40,7 @@ tower-http = { version = "0.4", features = [
 ] }
 tower = { version = "0.4", features = ["util", "timeout"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "tracing-log"] }
 tracing-appender = { version = "0.2.2" }
 hyper = { version = "0.14", features = ["full"] }
 tera = { version = "1.19" }
