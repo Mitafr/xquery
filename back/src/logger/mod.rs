@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc};
+use std::fmt;
 
 use async_session::log::RecordBuilder;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
@@ -25,9 +25,9 @@ use crate::session::{UserId, UserIdFromSession};
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 enum ActionCommand {
     #[default]
-    CommandRecord,
-    CommandFlush,
-    CommandExit,
+    Record,
+    Flush,
+    Exit,
 }
 
 #[derive(Debug, Clone)]
@@ -69,7 +69,7 @@ impl<'a> AppRecordBuilder<'a> {
 
     pub fn user(&mut self, user: UserIdFromSession) -> &mut AppRecordBuilder<'a> {
         match user {
-            UserIdFromSession::FoundUserId(user) => self.record.user = user.clone(),
+            UserIdFromSession::FoundUserId(user) => self.record.user = user,
             UserIdFromSession::NotFound() => {}
         };
         self
@@ -91,7 +91,7 @@ impl<'a> AppRecordBuilder<'a> {
     }
 }
 
-async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: Arc<DatabaseConnection>) {
+async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: DatabaseConnection) {
     let mut messages = Vec::new();
     'main: loop {
         let mut call_flush = false;
@@ -99,17 +99,17 @@ async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: Arc<DatabaseConne
         'rx: loop {
             match receiver.recv().await {
                 Some(a) => match a.command {
-                    ActionCommand::CommandRecord => {
+                    ActionCommand::Record => {
                         messages.push(a);
                         if messages.len() > 10 {
                             messages.push(ActionLogger {
-                                command: ActionCommand::CommandFlush,
+                                command: ActionCommand::Flush,
                                 entity: None,
                             });
                             break 'rx;
                         }
                     }
-                    ActionCommand::CommandFlush | ActionCommand::CommandExit => {
+                    ActionCommand::Flush | ActionCommand::Exit => {
                         call_flush = true;
                         break 'rx;
                     }
@@ -121,7 +121,7 @@ async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: Arc<DatabaseConne
             }
         }
         if call_flush {
-            exit = flush(&mut messages, Arc::clone(&db)).await;
+            exit = flush(&mut messages, &db).await;
         }
         if exit {
             info!("Exiting {}", messages.len());
@@ -133,14 +133,14 @@ async fn handle_logs(mut receiver: Receiver<ActionLogger>, db: Arc<DatabaseConne
 impl AppLogger {
     pub fn new(db: DatabaseConnection) -> AppLogger {
         let (sender, receiver) = tokio::sync::mpsc::channel::<ActionLogger>(256);
-        tokio::spawn(async move { handle_logs(receiver, Arc::new(db)).await });
+        tokio::spawn(async move { handle_logs(receiver, db).await });
         AppLogger { sender }
     }
 
     pub fn terminate(&mut self) {
         self.sender
             .try_send(ActionLogger {
-                command: ActionCommand::CommandExit,
+                command: ActionCommand::Exit,
                 entity: None,
             })
             .unwrap()
@@ -181,15 +181,15 @@ impl Drop for AppLogger {
     }
 }
 
-async fn flush(messages: &mut Vec<ActionLogger>, db: Arc<DatabaseConnection>) -> bool {
+async fn flush(messages: &mut Vec<ActionLogger>, db: &DatabaseConnection) -> bool {
     let mut exit = false;
     for message in &mut *messages {
-        exit = exit && message.command == ActionCommand::CommandExit;
+        exit = exit && message.command == ActionCommand::Exit;
         let entity = match message.entity.as_ref() {
             Some(e) => e,
             None => continue,
         };
-        entity.clone().insert(&*db).await.unwrap();
+        entity.clone().insert(db).await.unwrap();
     }
     messages.clear();
     exit

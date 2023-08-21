@@ -2,7 +2,7 @@
   <div class="col-12 md:col-8 lg:col-6 xl:col-4 p-fluid m-auto">
     <div class="surface-card p-4 shadow-8 border-round w-full">
       <div class="text-center mb-5">
-        <img src="@/assets/logo.svg" alt="Image" height="80" class="mb-3" />
+        <img src="@/assets/logo.svg" alt="Image" height="80" width="110" class="mb-3" />
         <div class="text-900 text-3xl font-medium mb-3">Connexion</div>
         <Divider />
       </div>

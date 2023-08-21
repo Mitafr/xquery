@@ -52,7 +52,6 @@ where
             .await
         {
             Ok(result) => {
-                // continue to decode the session cookie
                 let user_id = if let Some(session) = result {
                     if let Some(user_id) = session.get::<UserId>("user_id") {
                         tracing::debug!(
@@ -79,10 +78,6 @@ where
             Err(e) => {
                 tracing::error!("No Session attached to this Cookie \n {:#?}", e);
                 return Ok(Self::NotFound());
-                // return Err((
-                //     StatusCode::UNAUTHORIZED,
-                //     "No Session attached to this Cookie",
-                // ));
             }
         }
     }

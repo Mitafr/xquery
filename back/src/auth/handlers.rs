@@ -63,10 +63,12 @@ pub async fn login_handler(
         &payload.user,
     )
     .await;
-    if rs.is_empty() {
+    if rs.is_err() || rs.as_ref().unwrap().is_empty() {
         return Err(LoginError::new("Compte introuvable", StatusCode::FORBIDDEN));
     }
-    let res = ldap.simple_bind(&rs[0].dn, &payload.password).await;
+    let res = ldap
+        .simple_bind(&rs.unwrap()[0].dn, &payload.password)
+        .await;
     if res.is_err() {
         tracing::error!("LDAP error {}", res.err().unwrap());
         return Ok((jar, Redirect::to("/login").into_response()));

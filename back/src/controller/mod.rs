@@ -6,6 +6,7 @@ use axum::{
 use entities::log::Model as LogModel;
 use sea_orm::{EntityTrait, PaginatorTrait, QueryOrder};
 use serde::{Deserialize, Serialize};
+use tracing_log::log::Level::Debug;
 
 use crate::AppState;
 
@@ -30,7 +31,7 @@ pub async fn get_logs(
     let page = params.page;
     log!(
         state,
-        tracing_log::log::Level::Debug,
+        Debug,
         format_args!("Fetching logs page {}", page),
         user_id
     );
